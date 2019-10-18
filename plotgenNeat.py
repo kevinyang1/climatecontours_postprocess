@@ -14,6 +14,7 @@ from matplotlib.colors import ListedColormap
 import pandas as pd
 from mpl_toolkits.basemap import Basemap
 import metpy.calc
+import matplotlib.animation as animation
 
 dpi = 96
 
@@ -331,11 +332,9 @@ def start_composit_img(source_files_iter):
 
 def process_tmq_field(img_array, my_cmap=None, v_max=None, v_min=None, land=True):
     """
-    Takes the image, and then performs whatever transformations are needed to get the image looking proper
-    img_array: This is the contour that is being plotted (i.e. TMQ)
+    Takes in a list of numpy arrays, returning a gif with each frame corresponding to an array with basemap transformations
+    img_array: a list of nparrays, each corresponding to a frame in the resulting animation
     my_cmap: input a custom colormap for the img_array contour.  The default colormap is good though
-    u_wind: wind values in the u direction
-    v_wind: wind values in the v direction
     """
     # Set alpha
     if my_cmap is None:
@@ -351,29 +350,31 @@ def process_tmq_field(img_array, my_cmap=None, v_max=None, v_min=None, land=True
         # Create new colormap
         my_cmap = ListedColormap(my_cmap)
 
-    d = img_array #h['climate']['data'][0,...]
-    d = np.roll(d,[0,1152//2])
 
+    # defining some hardcoded variables
     lats = np.linspace(-90,90,768)
     longs = np.linspace(-180,180,1152)
+    figsize = (1152 / dpi, 768 / dpi)
 
-    def do_fig(figsize):
-        fig = plt.figure(figsize=figsize,dpi=dpi)
-        ax=fig.add_axes([0,0,1,1])
-        ax.axis('off')
+    # create the figure and apply basemap transformations
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+    ax=fig.add_axes([0, 0, 1, 1])
+    ax.axis('off')
 
-        my_map = Basemap(projection='cyl', llcrnrlat=min(lats), lon_0=np.median(longs),
-                  llcrnrlon=min(longs), urcrnrlat=max(lats), urcrnrlon=max(longs), resolution = 'c',fix_aspect=False)
-        xx, yy = np.meshgrid(longs, lats)
-        x_map,y_map = my_map(xx,yy)
-        my_map.drawcoastlines(color=[0.5,0.5,0.5])
+    my_map = Basemap(projection='cyl', llcrnrlat=min(lats), lon_0=np.median(longs),
+              llcrnrlon=min(longs), urcrnrlat=max(lats), urcrnrlon=max(longs), resolution='c', fix_aspect=False)
+    xx, yy = np.meshgrid(longs, lats)
+    x_map,y_map = my_map(xx,yy)
+    my_map.drawcoastlines(color=[0.5, 0.5, 0.5])
 
-        my_map.contourf(x_map,y_map,d,64,cmap=my_cmap, vmax=v_max, vmin=v_min)
+    if land:
+        my_map.fillcontinents(alpha=0.5)
 
-        if (not land):
-            my_map.fillcontinents(alpha=0.5)
-        return plt.gcf()
-        #mask_ex.savefig( namedir + "/" + plt_title,dpi=dpi,quality=100,pad_inches = 0)
-        #plt.clf()
+    # animate here
+    def do_fig_animate(i):
+        data_array = np.roll(img_array[i], [0, 1152 // 2])
+        my_map.contourf(x_map, y_map, data_array, 64, cmap=my_cmap, vmax=v_max, vmin=v_min)
 
-    return do_fig((1152/dpi, 768/dpi))
+    anim = animation.FuncAnimation(plt.gcf(), do_fig_animate, frames=len(img_array), interval=500, blit=True)
+
+    plt.show()

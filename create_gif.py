@@ -18,9 +18,10 @@ def create_gif(filename, save_location, num_timesteps=24, delay=0.5):
     map(lambda filename: H5_DIRECTORY + filename, filenames)
     images = get_TMQ_fields(filenames)
 
-    with imageio.get_writer(save_location, mode='I', duration=delay) as writer:
-        for image in images:
-            writer.append_data(image)
+    plotgenNeat.process_tmq_field(images)
+    #with imageio.get_writer(save_location, mode='I', duration=delay) as writer:
+    #    for image in images:
+    #        writer.append_data(image)
 
 def get_TMQ_fields(filenames):
     """
