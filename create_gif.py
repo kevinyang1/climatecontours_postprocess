@@ -1,4 +1,4 @@
-import imageio
+import os
 from datetime import date, timedelta
 import h5py as h5
 import plotgenNeat
@@ -6,22 +6,22 @@ import plotgenNeat
 MIN_TIMESTEP = '00'
 MAX_TIMESTEP = '07'
 H5_DIRECTORY = '/global/cscratch1/sd/amahesh/gb_data/All-Hist/'
+SAVE_DIRECTORY = '/project/projectdirs/ClimateNet/gifs/'
 
 # https://stackoverflow.com/questions/753190/programmatically-generate-video-or-animated-gif-in-python
 # TODO: error handling for when there are not images ahead or behind
-def create_gif(filename, save_location, num_timesteps=24, delay=0.5):
+def create_gif(filename, save_location, num_timesteps=24):
     """
     Save a gif to save_location, with each frame corresponding to an image file path specified with filenames. Delay
     specifies the amount of time before switching between frames.
     """
     filenames = prev_timesteps(filename, num_timesteps) + [filename] + next_timesteps(filename, num_timesteps)
-    map(lambda filename: H5_DIRECTORY + filename, filenames)
+    filenames = map(lambda filename: H5_DIRECTORY + filename, filenames)
     images = get_TMQ_fields(filenames)
 
-    plotgenNeat.process_tmq_field(images)
-    #with imageio.get_writer(save_location, mode='I', duration=delay) as writer:
-    #    for image in images:
-    #        writer.append_data(image)
+    animation = plotgenNeat.process_tmq_field(images, my_cmap='viridis')
+    filename_no_extension = os.path.splitext(filename)[0]
+    animation.save(save_location + filename_no_extension + '.gif', writer='imagemagick')
 
 def get_TMQ_fields(filenames):
     """
@@ -33,7 +33,7 @@ def get_TMQ_fields(filenames):
     for filename in filenames:
         h5_file = h5.File(filename)
         TMQ = h5_file['climate']['data'][:, :, 0]
-        result.append(plotgenNeat.process_tmq_field(TMQ, land=False))
+        result.append(TMQ)
 
     return result
 
@@ -54,7 +54,7 @@ def prev_timesteps(filename, num_steps):
         current_filename = minus_timestep(current_filename)
         result.append(current_filename)
 
-    return result
+    return result[::-1]
 
 # returns the filename corresponding to a single forward timestep
 def add_timestep(filename):
@@ -79,3 +79,6 @@ def minus_timestep(filename):
         current_date = date(int(filename_split[1]), int(filename_split[2]), int(filename_split[3]))
         day_delta = timedelta(days=1)
         return filename_split[0] + '-' + str(current_date - day_delta) + '-' + MAX_TIMESTEP + '-' + filename_split[5]
+
+create_gif('data-1999-08-07-01-1.h5', SAVE_DIRECTORY)
+

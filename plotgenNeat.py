@@ -1,8 +1,6 @@
 import matplotlib as mpl
 import glob
-#mpl.use('Agg')
 import os
-#os.environ['PROJ_LIB'] = "/global/homes/a/amahesh/.conda/envs/plotting_env/share/proj"
 import matplotlib.pyplot as plt
 import h5py as h5
 
@@ -31,7 +29,7 @@ def plot_mask_double(namedir, img_array, img_array2, storm_mask, plt_title,
     u_wind: wind values in the u direction
     v_wind: wind values in the v direction
     """
-    # Set alpha
+    # Sets to whiteish colormap
     if my_cmap is None:
         # Choose colormap
         cmap = mpl.cm.viridis
@@ -236,27 +234,6 @@ def plot_mask_triple(namedir, img_array, img_array2, img_array3, storm_mask, plt
 
     do_fig((1152/dpi,768/dpi))
 
-""" Select files from folder to convert """
-sourceDir_path = '/global/cscratch1/sd/amahesh/gb_data/All-Hist/'
-source_files = []
-
-testImg_names = []
-
-testImg_path = '/global/project/projectdirs/ClimateNet/Images_test/ivt/*.jpg'.format(i)
-testImg_files = glob.glob(testImg_path)
-# "/global/project/projectdirs/ClimateNet/Images_test/labels_0/data-2002-12-31-01-1.jpg"
-for file in testImg_files:
-    temp = file[-24:-3] + 'h5'
-    source_files += [sourceDir_path + temp]
-    # "/global/cscratch1/sd/amahesh/gb_data/All-Hist/data-2002-12-31-01-1.h5"
-    #testImg_names += [file[-24:]]
-    # "data-2002-12-31-01-1.jpg"
-
-other50_path = sourceDir_path + '*.h5'
-source_files_iter = glob.iglob(other50_path)
-
-source_files = set(source_files)
-
 def start_composit_img(source_files_iter):
     count = 0
     for sfile in source_files_iter:
@@ -326,10 +303,6 @@ def start_composit_img(source_files_iter):
         # plot_mask_double("./global/project/projectdirs/ClimateNet/Images_test/vor_ps_wind", PS, vorticity, np.zeros(vorticity.shape), name, 
         #                my_cmap='Wistia',v_max=129000,v_min=55000,my_cmap2='viridis',my_cmap3 = 'PiYG',line=3,v_max2=7,v_min2=1.3, u_wind=U850, v_wind=V850)
 
-
-#start_composit_img(source_files_iter)
-
-
 def process_tmq_field(img_array, my_cmap=None, v_max=None, v_min=None, land=True):
     """
     Takes in a list of numpy arrays, returning a gif with each frame corresponding to an array with basemap transformations
@@ -352,8 +325,8 @@ def process_tmq_field(img_array, my_cmap=None, v_max=None, v_min=None, land=True
 
 
     # defining some hardcoded variables
-    lats = np.linspace(-90,90,768)
-    longs = np.linspace(-180,180,1152)
+    lats = np.linspace(-90, 90, 768)
+    longs = np.linspace(-180, 180, 1152)
     figsize = (1152 / dpi, 768 / dpi)
 
     # create the figure and apply basemap transformations
@@ -374,7 +347,7 @@ def process_tmq_field(img_array, my_cmap=None, v_max=None, v_min=None, land=True
     def do_fig_animate(i):
         data_array = np.roll(img_array[i], [0, 1152 // 2])
         my_map.contourf(x_map, y_map, data_array, 64, cmap=my_cmap, vmax=v_max, vmin=v_min)
+        print("doing fig animate: " + str(i) + " out of " + str(len(img_array)))
+        return my_map
 
-    anim = animation.FuncAnimation(plt.gcf(), do_fig_animate, frames=len(img_array), interval=500, blit=True)
-
-    plt.show()
+    return animation.FuncAnimation(plt.gcf(), do_fig_animate, frames=len(img_array), interval=100, blit=False)
