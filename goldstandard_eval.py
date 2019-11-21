@@ -6,10 +6,15 @@ import xml.etree.ElementTree as ET
 # for testing purposes
 import matplotlib.pyplot as plt
 
-def get_polygons_from_XML(XML):
+
+TC_EVENT = 'tc'
+AR_EVENT = 'ar'
+
+def get_polygons_from_XML(XML, event):
     """
     Takes in an XML file and returns the union of the mask of all polygons present in the XML file.
     :param XML: the XML formatted file
+    :param event: name of the event to get masks, either TC_EVENT or AR_EVENT
     :return: a mask of all polygons on the image
     """
     tree = ET.parse(XML)
@@ -29,6 +34,7 @@ def get_polygons_from_XML(XML):
 
     # iterate through each polygon
     objects = root.findall('object')
+    objects = filter(lambda obj: obj.find('name').text[:2] == event and int(obj.find('deleted').text) == 0, objects)
     for object in objects:
 
         polygon = object.find('polygon')
@@ -62,9 +68,9 @@ def evaluate(gold, submitted):
     return (gold_intersect_sub / gold.sum(), gold_intersect_sub / submitted.sum())
 
 
-test_mask = get_polygons_from_XML('/Users/k_yang/Downloads/test.xml')
-test_gold = get_polygons_from_XML('/Users/k_yang/Downloads/test_gold.xml')
+test_mask = get_polygons_from_XML('/Users/k_yang/Downloads/data-1996-06-09-01-1209604741.xml', AR_EVENT)
+#test_gold = get_polygons_from_XML('/Users/k_yang/Downloads/test_gold.xml', AR_EVENT)
 
-print(evaluate(test_mask, test_gold))
-#plt.imshow(test_mask)
-#plt.show()
+#print(evaluate(test_mask, test_gold))
+plt.imshow(test_mask)
+plt.show()
