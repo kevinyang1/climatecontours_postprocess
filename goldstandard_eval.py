@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 # for testing purposes
 import matplotlib.pyplot as plt
 
-
 TC_EVENT = 'tc'
 AR_EVENT = 'ar'
 
@@ -24,13 +23,8 @@ def get_polygons_from_XML(XML, event):
     num_rows = int(root.find('imagesize/nrows').text)
     num_cols = int(root.find('imagesize/ncols').text)
 
-    print("num_rows: " + str(num_rows))
-    print("num_cols: " + str(num_cols))
-
     # create the result array
     result = np.zeros((num_rows, num_cols), dtype=np.uint8)
-    print(result.shape)
-
 
     # iterate through each polygon
     objects = root.findall('object')
@@ -49,6 +43,8 @@ def get_polygons_from_XML(XML, event):
             points_list.append(x)
             points_list.append(y)
 
+        if len(points_list) <= 2:
+            continue
         # flood fill polygon points, store in mask
         temp = np.zeros((num_rows, num_cols), dtype=np.uint8)
         temp_mask = PIL.Image.fromarray(temp)
@@ -68,9 +64,9 @@ def evaluate(gold, submitted):
     return (gold_intersect_sub / gold.sum(), gold_intersect_sub / submitted.sum())
 
 
-test_mask = get_polygons_from_XML('/Users/k_yang/Downloads/data-1996-06-09-01-1209604741.xml', AR_EVENT)
+#test_mask = get_polygons_from_XML('/Users/k_yang/Downloads/data-1996-06-09-01-1209604741.xml', AR_EVENT)
 #test_gold = get_polygons_from_XML('/Users/k_yang/Downloads/test_gold.xml', AR_EVENT)
 
 #print(evaluate(test_mask, test_gold))
-plt.imshow(test_mask)
-plt.show()
+#plt.imshow(test_mask)
+#plt.show()
